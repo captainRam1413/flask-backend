@@ -1,4 +1,4 @@
 # flask-backend
 
 
-rum main.py to start the flask server
+run main.py to start the flask server
