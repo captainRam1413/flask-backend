@@ -1,7 +1,8 @@
 from flask import Blueprint, jsonify,request
 from models2 import User,Pswd,Dashboard,Que,Ans
 from config import db
-from flask_jwt_extended import create_access_token,get_jwt_identity,jwt_required
+from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, create_refresh_token
+
 
 auth = Blueprint('auth', __name__)
 
@@ -16,8 +17,13 @@ def loginuser():
     
     if user and user.pswd.password == password:
         access_token = create_access_token(identity=user.email)
+        refresh_token = create_refresh_token(identity=user.email)
         return jsonify(
-            {'access_token':access_token},200
+            {
+                'access_token':access_token,
+                'email':user.email,
+                'refresh_token':refresh_token
+            },200
         )
         
 #routue for user signup/ creating new user
@@ -148,3 +154,11 @@ def delete_user(user_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': 'Failed to delete user and associated entries', 'details': str(e)}), 500
+
+
+@auth.route('/refresh-token', methods=['GET'])
+@jwt_required(refresh=True)
+def refresh():
+    current_user = get_jwt_identity()
+    access_token = create_access_token(identity=current_user)
+    return jsonify({'access_token': access_token}), 200

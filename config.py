@@ -20,6 +20,8 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(minutes=30)
 
+app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(hours=12)
+
 db = SQLAlchemy(app)
 
 
