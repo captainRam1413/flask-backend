@@ -26,7 +26,7 @@ def loginuser():
             },200
         )
         
-#routue for user signup/ creating new user
+#routue for user signup/creating new user
 @auth.route('/create-user',methods=['POST'])
 def createuser():
     data = request.get_json()
@@ -36,6 +36,13 @@ def createuser():
     email = data.get('email')
     phonenumber=data.get('phoneNumber')
     
+    user = User.query.filter_by(email=email).first()
+    if user:
+        return jsonify({
+            'message': 'User already exists'
+        },403
+        )
+        
     pswd = Pswd(password = password)
     new_user = User(first_name = first_name,last_name=last_name,email=email,phone_number=phonenumber)
     new_user.pswd = pswd
@@ -53,7 +60,7 @@ def createuser():
     
 #route for getting all user imformation    
 @auth.route('/getuser')
-@jwt_required()
+# @jwt_required()
 def getuser():
     user = User.query.all()
     json_user = list(map(lambda x: x.to_json(),user))
@@ -78,7 +85,9 @@ def addQue():
     data = request.get_json()
     
     que_string = data.get('que_string')
-    que = Que(que_string = que_string)
+    que_type =data.get('que_type')
+    startup_stage = data.get('startup_stage')
+    que = Que(que_string = que_string,que_type=que_type,startup_stage=startup_stage)
     
     db.session.add(que)
     
@@ -96,6 +105,7 @@ def addQue():
 def getque():
     que = Que.query.all()
     json_que = list(map(lambda x: x.to_json(),que))
+    count = Que.query.count()
     return jsonify({"que":json_que})
 
 
@@ -106,27 +116,34 @@ def getque():
 @jwt_required()
 def insert_answer():
     data = request.json
-    
-    
-    user_id = data.get('user_id')
-    que_id = data.get('que_id')
-    ans_string = data.get('ans_string')
+    user_id = get_jwt_identity()
+    answers = data.get('answers')
 
+    user = User.query.filter_by(email=user_id).first()
     
-    user = User.query.get(user_id)
-    que = Que.query.get(que_id)
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
     
-    if not user or not que:
-        return jsonify({'error': 'User or question not found'}), 404
+    if not answers:
+        return jsonify({'error': 'No answers provided'}), 400
 
-    
-    new_ans = Ans(que_id=que_id, ans_string=ans_string, user_id=user_id)
+    for ans_data in answers:
+        que_id = ans_data.get('question_id')
+        ans_string = ans_data.get('answer')
 
+        que = Que.query.get(que_id)
+        
+        if not que:
+            return jsonify({'error': f'Question {que_id} not found'}), 404
+
+        new_ans = Ans(que_id=que_id, ans_string=ans_string, user_id=user.user_id)
+        db.session.add(new_ans)
     
-    db.session.add(new_ans)
+    # Update the is_ans_given field
+    user.is_ans_given = True
     db.session.commit()
 
-    return jsonify({'message': 'Answer inserted successfully'}), 201
+    return jsonify({'message': 'Answers inserted successfully'}), 201
 
 # route for getting all ans from all user's
 @auth.route('/getans')
@@ -155,10 +172,27 @@ def delete_user(user_id):
         db.session.rollback()
         return jsonify({'error': 'Failed to delete user and associated entries', 'details': str(e)}), 500
 
-
+#refresh_token route
 @auth.route('/refresh-token', methods=['GET'])
 @jwt_required(refresh=True)
 def refresh():
     current_user = get_jwt_identity()
     access_token = create_access_token(identity=current_user)
     return jsonify({'access_token': access_token}), 200
+
+
+
+# route for getting is_ans_given
+@auth.route('/get-is-ans-given',methods=['GET'])
+@jwt_required()
+def getIsAnsGiven():
+    email = get_jwt_identity()
+    user = User.query.filter_by(email = email).first()
+    return jsonify(
+        {
+            "isAnsGiven":user.is_ans_given
+        }
+    )
+
+
+

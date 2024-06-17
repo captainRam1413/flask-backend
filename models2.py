@@ -54,13 +54,17 @@ class Dashboard(db.Model):  # corrected class name to 'Dashboard'
 class Que(db.Model):
     que_id = db.Column(db.Integer, primary_key=True)
     que_string = db.Column(db.String(255), nullable=False, unique=True)
+    que_type = db.Column(db.String(255),nullable=False)
+    startup_stage = db.Column(db.String(255),nullable=False)
     ans = db.relationship('Ans', backref='que', lazy=True, cascade="all, delete-orphan")
     
     
     def to_json(self):
         return{
-            'que_id': self.que_id,
-            'que_string': self.que_string
+            'question_id': self.que_id,
+            'que_string': self.que_string,
+            'que_type':self.que_type,
+            'startup_stage':self.startup_stage
             
         }
     
@@ -75,7 +79,7 @@ class Ans(db.Model):
     def to_json(self):
         return{
             'ans_id': self.ans_id,
-            'que_id': self.que_id,
-            'ans_string': self.ans_string,
+            'question_id': self.que_id,
+            'answer': self.ans_string,
             'user_id': self.user_id
         }

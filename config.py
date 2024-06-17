@@ -18,7 +18,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mydatabase.db'
 
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(minutes=30)
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(seconds=30)
 
 app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(hours=12)
 
@@ -31,11 +31,11 @@ jwt = JWTManager(app=app)
 
 @app.errorhandler(NoAuthorizationError)
 def handle_no_authorization_error(e):
-    return jsonify({"msg": "Missing Authorization Header"}), 401
+    return jsonify({"msg": "Missing Authorization Header"}), 402
 
 @jwt.unauthorized_loader
 def custom_unauthorized_response(callback):
-    return jsonify({"msg": "Missing Authorization Header"}), 401
+    return jsonify({"msg": "UnAuthorized Authorization Header"}), 403
 
 @jwt.expired_token_loader
 def custom_expired_token_response(jwt_header, jwt_payload):
@@ -47,5 +47,5 @@ def custom_invalid_token_response(callback):
 
 @jwt.revoked_token_loader
 def custom_revoked_token_response(jwt_header, jwt_payload):
-    return jsonify({"msg": "Token has been revoked"}), 401
+    return jsonify({"msg": "Token has been revoked"}), 402
 
