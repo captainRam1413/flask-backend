@@ -178,7 +178,7 @@ def delete_user(user_id):
 def refresh():
     current_user = get_jwt_identity()
     access_token = create_access_token(identity=current_user)
-    return jsonify({'access_token': access_token}), 200
+    return jsonify({'email':current_user},{'access_token': access_token}), 200
 
 
 
