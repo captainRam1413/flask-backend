@@ -60,7 +60,7 @@ def createuser():
     
 #route for getting all user imformation    
 @auth.route('/getuser')
-# @jwt_required()
+@jwt_required()
 def getuser():
     user = User.query.all()
     json_user = list(map(lambda x: x.to_json(),user))
