@@ -81,6 +81,7 @@ def getProfile():
 
 # route for adding question just for testing
 @auth.route('/addQue',methods=['POST'])
+@jwt_required()
 def addQue():
     data = request.get_json()
     
