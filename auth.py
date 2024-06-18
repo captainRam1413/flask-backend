@@ -103,6 +103,7 @@ def addQue():
 
 # route for getting all question just for testing
 @auth.route('/getque')
+@jwt_required()
 def getque():
     que = Que.query.all()
     json_que = list(map(lambda x: x.to_json(),que))
