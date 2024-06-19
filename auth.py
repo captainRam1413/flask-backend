@@ -25,6 +25,11 @@ def loginuser():
                 'refresh_token':refresh_token
             },200
         )
+    return jsonify(
+        {
+            'msg':'user not found'
+        },404
+    )
         
 #routue for user signup/creating new user
 @auth.route('/create-user',methods=['POST'])
