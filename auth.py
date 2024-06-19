@@ -197,7 +197,7 @@ def getIsAnsGiven():
     )
 
 
-@auth.route('/get-sratup-que',methods=['POST'])
+@auth.route('/get-startup-que',methods=['POST'])
 # @jwt_required()
 def getque():
     data = request.json
