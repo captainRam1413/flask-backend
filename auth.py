@@ -197,4 +197,14 @@ def getIsAnsGiven():
     )
 
 
+@auth.route('/get-sratup-que',methods=['POST'])
+# @jwt_required()
+def getque():
+    data = request.json
+    startup_stage = data['startup_stage']
+    que = Que.query.filter_by(startup_stage = startup_stage)
+    json_que = list(map(lambda x: x.to_json(),que))
+    count = Que.query.count()
+    return jsonify({"que":json_que})
+
 
