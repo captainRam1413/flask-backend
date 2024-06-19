@@ -202,7 +202,7 @@ def getIsAnsGiven():
 def get_startup_que():
     data = request.json
     startup_stage = data['startup_stage']
-    que = Que.query.filter_by(startup_stage = startup_stage)
+    que = Que.query.filter_by(startup_stage = startup_stage).all()
     json_que = list(map(lambda x: x.to_json(),que))
     count = Que.query.count()
     return jsonify({"que":json_que})
