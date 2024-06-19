@@ -199,7 +199,7 @@ def getIsAnsGiven():
 
 @auth.route('/get-startup-que',methods=['POST'])
 # @jwt_required()
-def getque():
+def get_startup_que():
     data = request.json
     startup_stage = data['startup_stage']
     que = Que.query.filter_by(startup_stage = startup_stage)
