@@ -135,8 +135,8 @@ def insert_answer():
         return jsonify({'error': 'No answers provided'}), 400
 
     for ans_data in answers:
-        que_id = ans_data.get('question_id')
-        ans_string = ans_data.get('answer')
+        que_id = ans_data.get('id')
+        ans_string = ans_data.get('ans')
 
         que = Que.query.get(que_id)
         

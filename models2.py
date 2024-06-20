@@ -79,7 +79,7 @@ class Ans(db.Model):
     def to_json(self):
         return{
             'ans_id': self.ans_id,
-            'question_id': self.que_id,
-            'answer': self.ans_string,
+            'id': self.que_id,
+            'ans': self.ans_string,
             'user_id': self.user_id
         }
