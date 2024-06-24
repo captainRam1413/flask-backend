@@ -13,6 +13,9 @@ class User(db.Model):
     # One-to-many relationship
     ans = db.relationship('Ans', backref='author', lazy=True, cascade="all, delete-orphan")
     
+    # One-to-many relationship
+    userans = db.relationship('Userans', backref='author', lazy=True, cascade="all, delete-orphan")
+    
     # One-to-one relationship
     dashboard = db.relationship('Dashboard', uselist=False, back_populates='user', cascade="all, delete-orphan")
 
@@ -67,8 +70,7 @@ class Que(db.Model):
             'startup_stage':self.startup_stage
             
         }
-    
-    
+        
 class Ans(db.Model):
     ans_id = db.Column(db.Integer, primary_key=True)
     que_id = db.Column(db.Integer, db.ForeignKey('que.que_id'), nullable=False)
@@ -79,6 +81,38 @@ class Ans(db.Model):
     def to_json(self):
         return{
             'ans_id': self.ans_id,
+            'id': self.que_id,
+            'ans': self.ans_string,
+            'user_id': self.user_id
+        }
+        
+class Userque(db.Model):
+    que_id = db.Column(db.Integer, primary_key=True)
+    que_string = db.Column(db.String(255), nullable=False, unique=True)
+    que_type = db.Column(db.String(255),nullable=False)
+    
+    userans = db.relationship('Userans', backref='userque', lazy=True, cascade="all, delete-orphan")
+    
+    
+    def to_json(self):
+        return{
+            'question_id': self.que_id,
+            'que_string': self.que_string,
+            'que_type':self.que_type,
+            
+            
+        }
+        
+class Userans(db.Model):
+    ans_id = db.Column(db.Integer, primary_key=True)
+    que_id = db.Column(db.Integer, db.ForeignKey('userque.que_id'), nullable=False)
+    ans_string = db.Column(db.Text, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), nullable=False)
+    
+    
+    def to_json(self):
+        return{
+            'user_ans_id': self.ans_id,
             'id': self.que_id,
             'ans': self.ans_string,
             'user_id': self.user_id
