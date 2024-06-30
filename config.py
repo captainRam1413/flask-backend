@@ -18,7 +18,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mydatabase.db'
 
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(minutes=5)
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(minutes=30)
 
 app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(hours=12)
 

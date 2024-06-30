@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify,request
-from models2 import User,Pswd,Dashboard,Que,Ans
+from models2 import User,Pswd,Dashboard,Que,Ans,Userque
 from config import db
 from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, create_refresh_token
 
@@ -108,7 +108,7 @@ def addQue():
 
 # route for getting all question just for testing
 @auth.route('/getQue')
-# @jwt_required()
+@jwt_required()
 def getque():
     que = Que.query.all()
     json_que = list(map(lambda x: x.to_json(),que))
@@ -116,7 +116,16 @@ def getque():
     return jsonify({"que":json_que})
 
 
-
+@auth.route('/geteduque')
+@jwt_required()
+def geteduque():
+    que = Userque.query.all()
+    json_que = list(map(lambda x : x.to_json(),que))
+    return jsonify(
+        {
+            "que":json_que
+        }
+    )
 
 # route for adding answer provided from a user to database
 @auth.route('/addans', methods=['POST'])
