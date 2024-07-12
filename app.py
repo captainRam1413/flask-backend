@@ -3,8 +3,10 @@ from config import app, db
 
 
 from auth import auth
+from consultantsroute import consultantsroute
 
 app.register_blueprint(auth)
+app.register_blueprint(consultantsroute,url_prefix='/consultant')
 
 @app.route('/')
 def home():

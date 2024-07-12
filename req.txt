@@ -4,3 +4,4 @@ flask_jwt_extended
 flask_cors
 datetime
 gunicorn
+Flask-Migrate

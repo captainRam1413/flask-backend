@@ -4,7 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_jwt_extended.exceptions import NoAuthorizationError
-
+from flask_migrate import Migrate
 
 
 app = Flask(__name__)
@@ -23,7 +23,7 @@ app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(minutes=30)
 app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(hours=12)
 
 db = SQLAlchemy(app)
-
+migrate = Migrate(app, db)
 
 jwt = JWTManager(app=app)
 
