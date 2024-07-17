@@ -2,9 +2,10 @@ from flask import Blueprint, jsonify,request
 from models2 import User,Pswd,Dashboard,Que,Ans,Userque
 from config import db
 from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, create_refresh_token
-
+import logging
 
 auth = Blueprint('auth', __name__)
+logging.basicConfig(level=logging.DEBUG)
 
 #route for user login
 @auth.route('/login-user',methods=['POST'])
@@ -143,17 +144,15 @@ def insert_answer():
     if not answers:
         return jsonify({'error': 'No answers provided'}), 400
 
-    for ans_data in answers:
-        que_id = ans_data.get('id')
-        ans_string = ans_data.get('ans')
-
-        que = Que.query.get(que_id)
-        
-        if not que:
-            return jsonify({'error': f'Question {que_id} not found'}), 404
-
-        new_ans = Ans(que_id=que_id, ans_string=ans_string, user_id=user.user_id)
-        db.session.add(new_ans)
+    # for ans_data in answers:
+    que_id = data.get('id')
+    ans_string = data.get('ans')
+    que = Que.query.get(que_id)
+    
+    if not que:
+        return jsonify({'error': f'Question {que_id} not found'}), 404
+    new_ans = Ans(que_id=que_id, ans_string=ans_string, user_id=user.user_id)
+    db.session.add(new_ans)
     
     # Update the is_ans_given field
     user.is_ans_given = True
@@ -161,6 +160,51 @@ def insert_answer():
 
     return jsonify({'message': 'Answers inserted successfully'}), 201
 
+@auth.route('/update-ans',methods=['POST'])
+@jwt_required()
+def updateans():
+    data = request.get_json()
+    email = data.get('userEmail')
+    que_id = data.get('question_id')
+    ans_string = data.get('ans')
+    user = User.query.filter_by(email= email).first()
+    id = user.user_id
+    
+    logging.debug(f"user_id : {id}")
+    ans = Ans.query.filter_by(user_id = id,que_id = que_id).first()
+    if ans :
+        logging.debug(f"ansObj : {ans}")
+        ans.ans_string = ans_string
+    else :
+        new_ans = Ans(que_id=que_id,ans_string=ans_string,user_id=id)
+        
+        db.session.add(new_ans)
+        
+    db.session.commit()
+    return jsonify({'message':f'Answers for question {que_id} is successfully updated'},200)
+
+
+@auth.route('/get-user-que-ans',methods=['POST'])
+@jwt_required()
+def getuserqueans():
+    data = request.get_json()
+    email = data.get('email')
+    que_id = data.get('que_id')
+    user = User.query.filter_by(email = email).first()
+    
+    ans = Ans.query.filter_by(user_id=user.user_id,que_id=que_id).first()
+    
+    if not ans:
+        return jsonify({
+            'message':'User answar not given'
+        },404)
+    
+    return jsonify({
+        'ans_string':ans.ans_string
+    },202)
+    
+    
+    
 # route for getting all ans from all user's
 @auth.route('/getans')
 def getans():

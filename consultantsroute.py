@@ -1,7 +1,7 @@
 from flask import Blueprint,jsonify,request
 import logging
 from models2 import ConToUser, Consultant,ConPswd, User
-from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, create_refresh_token
+from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, create_refresh_token # type: ignore
 from config import db
 
 
@@ -135,5 +135,6 @@ def getuserprofileconsultant():
         }
     )
     
+
     
 
