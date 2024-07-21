@@ -6,3 +6,7 @@ datetime
 gunicorn
 Flask-Migrate
 razorpay
+oauth2client
+google-api-python-client
+google_auth_oauthlib
+pickle
