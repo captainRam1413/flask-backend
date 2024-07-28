@@ -26,7 +26,7 @@ client_secrets_file = os.path.join(pathlib.Path(__file__).parent, "client_secret
 flow = Flow.from_client_secrets_file(
     client_secrets_file=client_secrets_file,
     scopes=["https://www.googleapis.com/auth/userinfo.profile", "https://www.googleapis.com/auth/userinfo.email", "openid", "https://www.googleapis.com/auth/calendar"],
-    redirect_uri="https://6e5f-59-88-174-109.ngrok-free.app/google/callback"
+    redirect_uri="https://flask-backend-7kfr.onrender.com/google/callback"
 )
 
 logging.basicConfig(level=logging.DEBUG)
