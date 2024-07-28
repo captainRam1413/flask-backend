@@ -10,9 +10,5 @@ oauth2client
 google-api-python-client
 google_auth_oauthlib
 
-pathlib
-requests
-google.oauth2
-google.oauth
-pip._vendor
+
 logging
