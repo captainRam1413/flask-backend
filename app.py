@@ -17,10 +17,10 @@ app.register_blueprint(googleroute,url_prefix='/google')
 def home():
     return "<h1>Home</h1>"
 
-if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-    app.run(debug=True)
+# if __name__ == '__main__':
+#     with app.app_context():
+#         db.create_all()
+#     app.run(host='0.0.0.0', port=5000, debug=True)
 
-# with app.app_context():
-#     db.create_all()
+with app.app_context():
+    db.create_all()

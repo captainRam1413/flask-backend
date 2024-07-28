@@ -22,6 +22,8 @@ app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(minutes=30)
 
 app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(hours=12)
 
+app.config["JWT_COOKIE_SECURE"] = True
+
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 

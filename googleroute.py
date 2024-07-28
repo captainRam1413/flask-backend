@@ -1,148 +1,100 @@
-from flask import Blueprint,jsonify,request
-import logging
-from models2 import ConToUser, Consultant,ConPswd, User
-from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, create_refresh_token # type: ignore
-from config import db
-from googleapiclient.discovery import build_from_document, build
-
-from oauth2client.client import OAuth2WebServerFlow
-from flask import redirect, url_for, session, request, jsonify
-from google.oauth2 import credentials
-from google_auth_oauthlib.flow import Flow
-from googleapiclient.discovery import build
 import os
-import pickle
+import pathlib
+import requests
+from flask import Flask, abort, redirect, request, Blueprint, jsonify
+from config import db
+from flask_jwt_extended import (
+    JWTManager, create_access_token, get_jwt_identity,
+    jwt_required, create_refresh_token, get_jwt, set_access_cookies, unset_jwt_cookies
+)
+from google.oauth2 import id_token
+from google_auth_oauthlib.flow import Flow
+from pip._vendor import cachecontrol
+import google.auth.transport.requests
+import logging
 
-CLIENT_ID = "1032598425328-eqbc8sab7j52jpfqeuvor2433ti88a4t.apps.googleusercontent.com"
-CLIENT_SECRET = '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'
+googleroute = Blueprint('googleroute', __name__)
+os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 
-googleroute = Blueprint('googleroute',__name__)
+app = Flask(__name__)
+app.config["JWT_SECRET_KEY"] = "your_jwt_secret_key"  # Change this to a strong secret key
+jwt = JWTManager(app)
+
+GOOGLE_CLIENT_ID = "297666298365-is04mt56qm1aduma1td103m5darfb0od.apps.googleusercontent.com"
+client_secrets_file = os.path.join(pathlib.Path(__file__).parent, "client_secret.json")
+
+flow = Flow.from_client_secrets_file(
+    client_secrets_file=client_secrets_file,
+    scopes=["https://www.googleapis.com/auth/userinfo.profile", "https://www.googleapis.com/auth/userinfo.email", "openid", "https://www.googleapis.com/auth/calendar"],
+    redirect_uri="https://6e5f-59-88-174-109.ngrok-free.app/google/callback"
+)
+
 logging.basicConfig(level=logging.DEBUG)
 
-os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
-# Replace with your Google Cloud project details
-CLIENT_SECRETS_FILE = "client_secret_1032598425328-eqbc8sab7j52jpfqeuvor2433ti88a4t.apps.googleusercontent.com.json"
-SCOPES = ['https://www.googleapis.com/auth/calendar']
-
-# Route to initiate OAuth flow
-# @googleroute.route('/get-authorize',methods=['GET'])
-# def authorize():
-#     flow = OAuth2WebServerFlow(client_id=CLIENT_ID,
-#     client_secret=CLIENT_SECRET,
-#     scope='https://www.googleapis.com/auth/calendar',
-#     redirect_uri='http://localhost:5000/google/oauth2callback',
-#     approval_prompt='force',
-#     access_type='offline')
-
-#     auth_uri = flow.step1_get_authorize_url()
-#     # return redirect(auth_uri)
-#     return jsonify(
-#         {
-#             "authorization_url":auth_uri
-#         },200
-#     )
-    
-
-# # OAuth2 callback route
-# @googleroute.route('/oauth2callback',methods=['GET'])
-# def oauth2callback():
-#     code = request.args.get('code')
-#     if code:
-#     # exchange the authorization code for user credentials
-#         flow = OAuth2WebServerFlow(CLIENT_ID,
-#         CLIENT_SECRET,
-#         "https://www.googleapis.com/auth/calendar")
-#         flow.redirect_uri = request.base_url
-#         try:
-#           credentials = flow.step2_exchange(code)
-#         except Exception as e:
-#           print(f"Unable to get an access token because {e.message}")
-
-#         # store these credentials for the current user in the session
-#         # This stores them in a cookie, which is insecure. Update this
-#         # with something better if you deploy to production land
-#         session['credentials'] = credentials
-
-#     return jsonify(
-#         {
-#             "meassage":"success"
-#         },200
-#     )
-
-# # Fetch and display calendar events
-# @googleroute.route('/calendar/events', methods=['GET'])
-# @jwt_required()
-# def calendar_events():
-#     if 'credentials' not in session:
-#         return jsonify({"msg": "No credentials in session"}), 401
-
-#     credentials = google.oauth2.credentials.Credentials(
-#         **session['credentials']
-#     )
-#     service = build('calendar', 'v3', credentials=credentials)
-
-#     events_result = service.events().list(calendarId='primary', maxResults=10).execute()
-#     events = events_result.get('items', [])
-
-#     session['credentials'] = credentials_to_dict(credentials)
-#     return jsonify(events), 200
-
-# # Schedule a new event
-# @googleroute.route('/calendar/events/create', methods=['POST'])
-# @jwt_required()
-# def create_event():
-#     if 'credentials' not in session:
-#         return jsonify({"msg": "No credentials in session"}), 401
-
-#     event_data = request.json
-#     credentials = google.oauth2.credentials.Credentials(
-#         **session['credentials']
-#     )
-#     service = build('calendar', 'v3', credentials=credentials)
-
-#     event = service.events().insert(calendarId='primary', body=event_data).execute()
-
-#     session['credentials'] = credentials_to_dict(credentials)
-#     return jsonify(event), 200
-
-# def credentials_to_dict(credentials):
-#     return {
-#         'token': credentials.token,
-#         'refresh_token': credentials.refresh_token,
-#         'token_uri': credentials.token_uri,
-#         'client_id': credentials.client_id,
-#         'client_secret': credentials.client_secret,
-#         'scopes': credentials.scopes
-#     }
-
-flow = Flow.from_client_secrets_file(CLIENT_SECRETS_FILE, SCOPES, redirect_uri='http://localhost:5000/oauth2callback')
-
-@googleroute.route('/')
-def index():
-    if 'credentials' not in session:
-        return redirect('authorize')
-    credentials = pickle.loads(session['credentials'])
-    service = build('calendar', 'v3', credentials=credentials)
-    events_result = service.events().list(calendarId='primary', maxResults=10, singleEvents=True, orderBy='startTime').execute()
-    events = events_result.get('items', [])
-    return jsonify(events)
-
-@googleroute.route('/authorize')
-def authorize():
-    authorization_url, state = flow.authorization_url(prompt='consent')
-    session['state'] = state
+@googleroute.route("/login")
+def login():
+    authorization_url, state = flow.authorization_url()
     return redirect(authorization_url)
 
-@googleroute.route('/oauth2callback')
-def oauth2callback():
-    flow.fetch_token(authorization_response=request.url)
-    if not flow.credentials:
-        return 'Error: Could not get credentials'
-    session['credentials'] = pickle.dumps(flow.credentials)
-    return redirect(url_for('index'))
 
-@googleroute.route('/logout')
+@googleroute.route("/callback")
+def callback():
+    logging.debug('callback hit 1')
+    flow.fetch_token(authorization_response=request.url)
+    logging.debug('callback hit 2')
+    credentials = flow.credentials
+
+    request_session = requests.session()
+    cached_session = cachecontrol.CacheControl(request_session)
+    token_request = google.auth.transport.requests.Request(session=cached_session)
+    logging.debug('callback hit 3')
+    id_info = id_token.verify_oauth2_token(
+        id_token=credentials._id_token,
+        request=token_request,
+        audience=GOOGLE_CLIENT_ID
+    )
+
+    google_id = id_info.get("sub")
+    name = id_info.get("name")
+
+    access_token = create_access_token(identity=google_id)
+    refresh_token = create_refresh_token(identity=google_id)
+
+    logging.debug(f"google_id: {google_id}")
+    logging.debug(f"token: {credentials.token}")
+    logging.debug(f"refresh_token: {credentials.refresh_token}")
+
+    response = jsonify({
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "name": name
+    })
+    set_access_cookies(response, access_token)
+    return response
+
+
+@googleroute.route("/protected_area")
+@jwt_required()
+def protected_area():
+    logging.debug('callback redirect hit 01')
+    google_id = get_jwt_identity()
+    return jsonify(logged_in_as=google_id), 200
+
+
+@googleroute.route("/logout")
 def logout():
-    session.pop('credentials', None)
-    return redirect(url_for('index'))
+    response = jsonify({"msg": "logout successful"})
+    unset_jwt_cookies(response)
+    return response
+
+
+@googleroute.route("/")
+def index():
+    return "Hello World <a href='/google/login'><button>Login</button></a>"
+
+
+app.register_blueprint(googleroute, url_prefix='/google')
+
+if __name__ == "__main__":
+    app.run(debug=True)
